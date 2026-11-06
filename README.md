@@ -18,18 +18,51 @@ OpenCode only reports real token counts when a step **ends**, so there is
 nothing to divide by while text is still arriving. The plugin bridges that gap:
 
 1. It counts characters from streamed text, reasoning, and tool-input deltas.
-2. It converts them to tokens with a chars-per-token ratio (default `4`) and
-   computes a rolling average over the last 2 seconds.
+2. It converts them to tokens with a chars-per-token ratio and computes a
+   rolling average over the last 2 seconds. The ratio starts from a table
+   measured offline per model (`calibration.ts`), not a global constant.
 3. When the step ends it compares the character count with the real
-   `output + reasoning` token count, clamps the derived ratio to `1.5–8`, and
-   feeds the result back as the starting ratio for the next step. The ratio is
-   kept **per model**, smoothed with a 70/30 exponential moving average, so the
-   estimate converges on your models quickly.
+   `output + reasoning` token count, and feeds the derived ratio back as the
+   starting ratio for the next step. The ratio is kept **per model**, smoothed
+   with a 70/30 exponential moving average, so the estimate converges on your
+   models quickly.
 4. The final value is computed from the real token count over the streamed
    duration, not from the estimate.
 
 That is why the live number is prefixed with `~`: it is an estimate. The value
 without `~` is measured.
+
+## Calibration
+
+`calibration.ts` holds a chars-per-token value for each model, fitted offline
+from data OpenCode already stores: every finished assistant message records the
+provider-reported token counts alongside the text that was streamed. No
+tokenizer runs at runtime, so the footer stays O(1) per delta.
+
+The shipped table was generated from one developer's local history; your
+content mix may differ, so regenerate it periodically:
+
+```sh
+bun run calibrate                                  # writes calibration.ts
+bun run calibrate -- --min-steps 50                # require more evidence
+bun run calibrate -- --db /path/to/opencode.db     # non-default database
+bun run calibrate -- --stdout                      # preview, do not write
+```
+
+The tool prints the fit for each model:
+
+```
+"opencode-go/deepseek-v4.1-flash": 3.390, // n=514, agg=3.48, MAPE 21.0% -> 14.7%
+```
+
+`n` is the number of steps used, `agg` the aggregate chars/token, and the two
+percentages are mean absolute percentage error before and after calibration.
+Models below `--min-steps` are omitted and the tracker falls back to 4.
+
+Known limitation: models that report reasoning tokens without streaming the
+reasoning text (for example GPT-5.x behind Copilot) have almost no characters
+per token and no single ratio fits them well. They are calibrated anyway, but
+expect a much larger error until the step ends and real counts arrive.
 
 ## Installation
 
@@ -112,7 +145,7 @@ The defaults are fine for most use. To override them, use the object form:
 | Option | Default | Meaning |
 |---|---|---|
 | `windowMs` | `2000` | Rolling averaging window for the live estimate, in milliseconds. Lower is twitchier and more responsive; higher is smoother. |
-| `charsPerToken` | `4` | Starting estimate before the first calibration. Applies only until a step completes on that model; after that the learned per-model ratio wins. |
+| `charsPerToken` | `4` | Fallback for models missing from `calibration.ts`. Models in the table start from their measured value instead. |
 
 The plugin id is `local.token-throughput`, useful if you need to confirm which
 plugins loaded.
@@ -123,6 +156,8 @@ plugins loaded.
 |---|---|
 | `tui.tsx` | Plugin entry point. Registers the plugin, owns the store, and renders the footer via a `prompt.footer.status` slot. |
 | `tracker.ts` | `ThroughputStore` — event handling, the rolling window, and per-model ratio calibration. Framework-independent. |
+| `calibration.ts` | Generated table of chars-per-token per model. Regenerate with `bun run calibrate`. |
+| `tools/calibrate.ts` | Offline fitter: reads the OpenCode database and writes `calibration.ts`. Never loaded at runtime. |
 | `package.json` | Exports map that tells OpenCode where the TUI entry point lives. |
 
 ## License

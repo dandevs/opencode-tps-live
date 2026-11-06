@@ -20,6 +20,9 @@
   },
   "license": "Unlicense",
   "type": "module",
+  "scripts": {
+    "calibrate": "bun tools/calibrate.ts"
+  },
   "exports": {
     "./tui": "./tui.tsx"
   },

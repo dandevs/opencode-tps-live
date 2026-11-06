@@ -1,4 +1,5 @@
 import type { OpenCodeEvent } from "@opencode/client"
+import { CALIBRATION } from "./calibration.ts"
 
 export type ThroughputSnapshot = {
   readonly active: boolean
@@ -35,8 +36,10 @@ type TokenCounts = {
 const DEFAULT_WINDOW_MS = 2_000
 const DEFAULT_TICK_MS = 250
 const DEFAULT_CHARS_PER_TOKEN = 4
-const MIN_RATIO = 1.5
+const MIN_RATIO = 0.5
 const MAX_RATIO = 8
+const CALIBRATION_FLOOR = 0.5
+const CALIBRATION_CEILING = 8
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
@@ -46,8 +49,8 @@ const clock = () => (typeof performance !== "undefined" ? performance.now() : Da
 /**
  * Estimates live output throughput from streamed text, reasoning, and tool
  * input deltas. OpenCode only reports real token counts when a step ends, so
- * the live value uses a chars-per-token ratio that is recalibrated after each
- * completed step.
+ * the live value uses a chars-per-token ratio that is seeded from the offline
+ * calibration table and recalibrated after each completed step.
  */
 export class ThroughputStore {
   private readonly trackers = new Map<string, Tracker>()
@@ -62,6 +65,10 @@ export class ThroughputStore {
     this.windowMs = options.windowMs ?? DEFAULT_WINDOW_MS
     this.tickMs = options.tickMs ?? DEFAULT_TICK_MS
     this.charsPerToken = options.charsPerToken ?? DEFAULT_CHARS_PER_TOKEN
+    for (const [modelKey, ratio] of Object.entries(CALIBRATION)) {
+      if (!Number.isFinite(ratio) || ratio <= 0) continue
+      this.ratios.set(modelKey, clamp(ratio, CALIBRATION_FLOOR, CALIBRATION_CEILING))
+    }
     this.timer = setInterval(() => this.tick(), this.tickMs) as ReturnType<typeof setInterval> & {
       unref?: () => void
     }
