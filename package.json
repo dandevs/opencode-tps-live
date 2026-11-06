@@ -18,6 +18,7 @@
   "bugs": {
     "url": "https://github.com/dandevs/opencode-tps-live/issues"
   },
+  "license": "Unlicense",
   "type": "module",
   "exports": {
     "./tui": "./tui.tsx"

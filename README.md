@@ -127,4 +127,6 @@ plugins loaded.
 
 ## License
 
-Not specified yet.
+[The Unlicense](LICENSE) — released into the public domain. Copy it, strip the
+license off, vendor it, sell it, relicense it: no attribution and no notice
+required.
