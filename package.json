@@ -1,0 +1,31 @@
+{
+  "name": "opencode-tps-live",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Live tokens-per-second readout in the OpenCode TUI prompt footer",
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "tui",
+    "tokens",
+    "throughput"
+  ],
+  "homepage": "https://github.com/dandevs/opencode-tps-live#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dandevs/opencode-tps-live.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dandevs/opencode-tps-live/issues"
+  },
+  "type": "module",
+  "exports": {
+    "./tui": "./tui.tsx"
+  },
+  "peerDependencies": {
+    "@opencode/plugin": ">=2.0.0",
+    "@opentui/core": ">=0.8.0",
+    "@opentui/solid": ">=0.8.0",
+    "solid-js": ">=1.9.0"
+  }
+}

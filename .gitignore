@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# lockfiles — this is a plugin consumed from source, not an app
+bun.lock
+bun.lockb
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# build output
+dist/
+*.tsbuildinfo
+
+# local env / editor / os
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+*.swp
+*.log
