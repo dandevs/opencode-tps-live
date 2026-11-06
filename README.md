@@ -26,8 +26,10 @@ nothing to divide by while text is still arriving. The plugin bridges that gap:
    starting ratio for the next step. The ratio is kept **per model**, smoothed
    with a 70/30 exponential moving average, so the estimate converges on your
    models quickly.
-4. The final value is computed from the real token count over the streamed
-   duration, not from the estimate.
+4. The final value is computed from the real token count over the generation
+   window — first delta to last delta — so it excludes time to first token and
+   measures the same thing as the live estimate. A wall-clock rate that includes
+   time to first token is also computed and exposed on the snapshot.
 
 That is why the live number is prefixed with `~`: it is an estimate. The value
 without `~` is measured.

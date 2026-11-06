@@ -1,6 +1,6 @@
 {
   "name": "opencode-tps-live",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Live tokens-per-second readout in the OpenCode TUI prompt footer",
   "keywords": [
